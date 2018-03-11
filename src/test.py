@@ -9,7 +9,7 @@ We can use other activation functions from tensorflow libraries ie. tf.nn.<activ
 '''
 
 # read data:
-training_data, validation_data, test_data = func.load_mnist_data_shared("../data/mnist_expanded.pkl.gz")  #"../data/mnist_expanded.pkl.gz"
+training_data, validation_data, test_data = func.load_mnist_data_shared()  #"../data/mnist_expanded.pkl.gz" if dataset is expanded
 
 # mini-batch size:
 mini_batch_size = 10
