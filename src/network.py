@@ -1,5 +1,7 @@
 """network.py
 ~~~~~~~~~~~~~~
+Written by Yong Yu Wen, 2018
+
 (Built using tensorflow-gpu 1.6.0, cuda 9.0 and cuDNN 7.05)
 
 A TensorFlow-based program for training and running simple neural
@@ -74,6 +76,7 @@ class Network(object):
         lmbda: Regularization parameter for l2 regularization
 
         :return: None
+        
         '''
 
         #Initialize accuracies list
@@ -302,6 +305,9 @@ class ConvPoolLayer(object):
 
         Tensorflow input shape is a 4d tensor with dimensions [batch, in_height, in_width, in_channels]
             For the mnist data, it would be (mini_batch_size, 28, 28, 1)
+        
+        filter_shape: 4D tensor of shape [filter_height, filter_width, in_channels, out_channels]
+        image_shape: 4D tensor of shape [batch_size, image_height, image_width, num_channels]
         activation_fn: the activation function to be used in this layer instance
         padding: Type of padding to use for convolution operation. Either SAME or VALID
         c_stride: stride length of convolution sliding window. Default is 1
@@ -438,3 +444,6 @@ class SoftmaxLayer(object):
         #Return the accuracy for the mini-batch.
         correct = tf.equal(y, tf.cast(self.y_out, tf.int32))
         return tf.reduce_mean(tf.cast(correct, tf.float32))
+
+
+
