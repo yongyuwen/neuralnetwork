@@ -26,7 +26,7 @@ import numpy as np
 import tensorflow as tf
 tf.logging.set_verbosity(tf.logging.ERROR)
 
-#Import sekf-defined functions
+#Import self-defined functions
 from func import * #Bad practice but for ease of access of all self defined functions
 
 
@@ -74,7 +74,6 @@ class Network(object):
         lmbda: Regularization parameter for l2 regularization
 
         :return: None
-        
         '''
 
         #Initialize accuracies list
@@ -88,7 +87,8 @@ class Network(object):
         # compute number of minibatches for training, validation and testing
         num_training_batches = int(size(training_data)/mini_batch_size)
         num_validation_batches = int(size(validation_data)/mini_batch_size)
-        num_test_batches = int(size(test_data)/mini_batch_size)
+        if test_data:
+            num_test_batches = int(size(test_data)/mini_batch_size)
 
 
         # define the (regularized) cost function
@@ -112,7 +112,8 @@ class Network(object):
         #Loading of data
         training_x, training_y = training_data
         validation_x, validation_y = validation_data
-        test_x, test_y = test_data
+        if test_data:
+            test_x, test_y = test_data
 
         #~~~~~Do the actual training
         with tf.Session() as sess:
@@ -124,89 +125,97 @@ class Network(object):
 
             if save_dir:
                 try:
-                    print("Searching for stored model")
+                    print("\n\nSearching for stored model")
                     saver.restore(sess, save_dir)
-                    print("Model restored.")
+                    print("Model restored.\n\n")
                 except:
                     print("No model of specified name found")
-                    print("Initializing new model...")
+                    print("Initializing new model...\n\n")
                     sess.run(tf.global_variables_initializer())
             else:
-                print("Initializing new model")
+                print("\n\nInitializing new model...\n\n")
                 sess.run(tf.global_variables_initializer())
 
             start_time = time.time() #Track time taken for model
 
-            for epoch in range(epochs):
-                for minibatch_index in range(num_training_batches):
-                    iteration = num_training_batches*epoch+minibatch_index
-                    if iteration % 1000 == 0:
-                        print("Training mini-batch number {0}".format(iteration))
+            try:
+                for epoch in range(epochs):
+                    for minibatch_index in range(num_training_batches):
+                        iteration = num_training_batches*epoch+minibatch_index
+                        if iteration % 1000 == 0:
+                            print("Training mini-batch number {0}".format(iteration))
 
-                    #Training of the model
-                    train_step.run(feed_dict={self.x:
-                                                  training_x[minibatch_index*self.mini_batch_size: (minibatch_index+1)*self.mini_batch_size],
-                                              self.y:
-                                                  training_y[minibatch_index*self.mini_batch_size: (minibatch_index+1)*self.mini_batch_size]})
-
-                    # Calculate and storing of Accuracies
-                    if (iteration+1) % num_training_batches == 0:
-                        if calibration:
-                            train_accuracy = np.mean(
-                                [mb_accuracy.eval(feed_dict={self.x:
+                        #Training of the model
+                        train_step.run(feed_dict={self.x:
                                                       training_x[minibatch_index*self.mini_batch_size: (minibatch_index+1)*self.mini_batch_size],
                                                   self.y:
-                                                      training_y[minibatch_index*self.mini_batch_size: (minibatch_index+1)*self.mini_batch_size]}
-                                                      ) for j in range(num_training_batches)])
-                            print("Epoch {0}: train accuracy {1:.2%}".format(
-                                epoch, train_accuracy))
-                            if store_accuracies:
-                                self.train_accuracies.append(train_accuracy)
+                                                      training_y[minibatch_index*self.mini_batch_size: (minibatch_index+1)*self.mini_batch_size]})
 
-
-                        validation_accuracy = np.mean(
-                            [mb_accuracy.eval(feed_dict = {self.x:
-                                                               validation_x[j*self.mini_batch_size: (j+1)*self.mini_batch_size],
-                                                           self.y:
-                                                               validation_y[j*self.mini_batch_size: (j+1)*self.mini_batch_size]
-                                                           }) for j in range(num_validation_batches)])
-                        print("Epoch {0}: validation accuracy {1:.2%}".format(
-                            epoch, validation_accuracy))
-                        if store_accuracies:
-                            self.validation_accuracies.append(validation_accuracy)
-
-                        if calibration:
-                            if test_data:
-                                test_accuracy = np.mean(
-                                    [mb_accuracy.eval(feed_dict = {self.x:
-                                                                            test_x[j*self.mini_batch_size: (j+1)*self.mini_batch_size],
-                                                                        self.y:
-                                                                            test_y[j*self.mini_batch_size: (j+1)*self.mini_batch_size]
-                                                                        }) for j in range(num_test_batches)])
-                                print('The corresponding test accuracy is {0:.2%}'.format(
-                                    test_accuracy))
+                        # Calculate and storing of Accuracies
+                        if (iteration+1) % num_training_batches == 0:
+                            if calibration:
+                                train_accuracy = np.mean(
+                                    [mb_accuracy.eval(feed_dict={self.x:
+                                                          training_x[minibatch_index*self.mini_batch_size: (minibatch_index+1)*self.mini_batch_size],
+                                                      self.y:
+                                                          training_y[minibatch_index*self.mini_batch_size: (minibatch_index+1)*self.mini_batch_size]}
+                                                          ) for j in range(num_training_batches)])
+                                print("Epoch {0}: train accuracy {1:.2%}".format(
+                                    epoch, train_accuracy))
                                 if store_accuracies:
-                                    self.test_accuracies.append(test_accuracy)
+                                    self.train_accuracies.append(train_accuracy)
+
+
+                            validation_accuracy = np.mean(
+                                [mb_accuracy.eval(feed_dict = {self.x:
+                                                                   validation_x[j*self.mini_batch_size: (j+1)*self.mini_batch_size],
+                                                               self.y:
+                                                                   validation_y[j*self.mini_batch_size: (j+1)*self.mini_batch_size]
+                                                               }) for j in range(num_validation_batches)])
+                            print("Epoch {0}: validation accuracy {1:.2%}".format(
+                                epoch, validation_accuracy))
+                            if store_accuracies:
+                                self.validation_accuracies.append(validation_accuracy)
+
+                            if calibration:
+                                if test_data:
+                                    test_accuracy = np.mean(
+                                        [mb_accuracy.eval(feed_dict = {self.x:
+                                                                                test_x[j*self.mini_batch_size: (j+1)*self.mini_batch_size],
+                                                                            self.y:
+                                                                                test_y[j*self.mini_batch_size: (j+1)*self.mini_batch_size]
+                                                                            }) for j in range(num_test_batches)])
+                                    print('The corresponding test accuracy is {0:.2%}'.format(
+                                        test_accuracy))
+                                    if store_accuracies:
+                                        self.test_accuracies.append(test_accuracy)
 
 
 
-                        if validation_accuracy >= best_validation_accuracy:
-                            print("This is the best validation accuracy to date.")
-                            best_validation_accuracy = validation_accuracy
-                            best_iteration = iteration
-                            if test_data:
-                                test_accuracy = np.mean(
-                                    [mb_accuracy.eval(feed_dict = {self.x:
-                                                                            test_x[j*self.mini_batch_size: (j+1)*self.mini_batch_size],
-                                                                        self.y:
-                                                                            test_y[j*self.mini_batch_size: (j+1)*self.mini_batch_size]
-                                                                        }) for j in range(num_test_batches)])
-                                print('The corresponding test accuracy is {0:.2%}'.format(
-                                    test_accuracy))
+                            if validation_accuracy >= best_validation_accuracy:
+                                print("This is the best validation accuracy to date.")
+                                best_validation_accuracy = validation_accuracy
+                                best_iteration = iteration
+                                if test_data:
+                                    test_accuracy = np.mean(
+                                        [mb_accuracy.eval(feed_dict = {self.x:
+                                                                                test_x[j*self.mini_batch_size: (j+1)*self.mini_batch_size],
+                                                                            self.y:
+                                                                                test_y[j*self.mini_batch_size: (j+1)*self.mini_batch_size]
+                                                                            }) for j in range(num_test_batches)])
+                                    print('The corresponding test accuracy is {0:.2%}'.format(
+                                        test_accuracy))
 
-                            #Saving best weights and biases
-                            save_path = saver.save(sess, "/tmp/best.ckpt")
-                            print("Best variables saved in specified file dir: %s" % save_path)
+                                #Saving best weights and biases
+                                #save_path = saver.save(sess, "/tmp/best.ckpt")
+                                #print("Best variables saved in specified file dir: %s" % save_path)
+                                if best_validation_accuracy == 1:
+                                    raise GetOutOfLoop
+
+            except GetOutOfLoop:
+                print("100% Accuracy achieved. Stopping training...\n\n")
+                pass
+                                
                                                             
 
             end_time = time.time()
@@ -219,14 +228,14 @@ class Network(object):
 
             print("Best validation accuracy of {0:.2%} obtained at iteration {1}".format(
                 best_validation_accuracy, str(best_iteration)))
-            print("Corresponding test accuracy of {0:.2%}".format(test_accuracy))
+            if test_data:
+                print("Corresponding test accuracy of {0:.2%}".format(test_accuracy))
 
             if save_dir:
                 save_path = saver.save(sess, save_dir)
                 print("Model saved in specified file dir: %s" % save_path)
             else:
-                save_path = saver.save(sess, "/tmp/model.ckpt")
-                print("Model saved in default file dir: %s" % save_path)
+                pass
 
             '''
             print("List of train accuracies are:", self.train_accuracies)
@@ -256,11 +265,13 @@ class Network(object):
             saver.restore(sess, "/tmp/model.ckpt")
             
             print("Predicting results...")
+            
             predictions.extend([mb_predictions.eval(feed_dict = {self.x:
                                                                  test_x[j*self.mini_batch_size: (j+1)*self.mini_batch_size],
                                                                  self.y:
                                                                  test_y[j*self.mini_batch_size: (j+1)*self.mini_batch_size]
                                                                  }) for j in range(num_test_batches)])
+                                                                
             predictions = np.concatenate(predictions).ravel().tolist()
             print("Number of predictions = ", len(predictions))
             print("Number of test samples = ", size(data))
@@ -273,7 +284,6 @@ class Network(object):
                                                }) for j in range(num_test_batches)])
             return predictions, accuracy
             
-        
 
 
 ###Define Layer types
@@ -285,31 +295,31 @@ class ConvPoolLayer(object):
 
     """
 
-    def __init__(self, filter_shape, image_shape, poolsize=(2, 2),
-                 activation_fn=sigmoid, padding='SAME'):
+    def __init__(self, filter_shape, image_shape, 
+                 activation_fn=sigmoid, padding='SAME', c_stride=[1,1,1,1], k_stride = [1,2,2,1], k_size = [1, 2, 2, 1]):
         """Filter is of shape [filter_height, filter_width, in_channels, out_channels]
             For the mnist data in the sample, it would be (5, 5, 1, 20)
 
         Tensorflow input shape is a 4d tensor with dimensions [batch, in_height, in_width, in_channels]
             For the mnist data, it would be (mini_batch_size, 28, 28, 1)
-
-        `poolsize` is a tuple of length 2, whose entries are the y and
-        x pooling sizes.
-
         activation_fn: the activation function to be used in this layer instance
-
         padding: Type of padding to use for convolution operation. Either SAME or VALID
-        
+        c_stride: stride length of convolution sliding window. Default is 1
+        k_stride: stride length of max pool window. Default is 2
+        k_size: size of max pool window. Default is 2
         Notably: We do not incorporate drop-out for convolutional layer becuase the shared weight and biases
         already generelizes the layer
         """
         self.filter_shape = filter_shape
         self.image_shape = image_shape
-        self.poolsize = poolsize
+        self.poolsize = k_size[1:3]
         self.activation_fn=activation_fn
         self.padding = padding
+        self.c_stride = c_stride
+        self.k_stride = k_stride
+        self.k_size = k_size
         # initialize weights and biases
-        n_out = (filter_shape[0]*np.prod(filter_shape[2:])/np.prod(poolsize))
+        n_out = (filter_shape[0]*np.prod(filter_shape[2:])/np.prod(self.poolsize))
         self.w = tf.Variable(
             np.asarray(
                 np.random.normal(loc=0, scale=np.sqrt(1.0/n_out), size=filter_shape),
@@ -321,12 +331,13 @@ class ConvPoolLayer(object):
                 dtype="float32")
         )
         self.params = [self.w, self.b]
+        
 
     def set_inpt(self, inpt, inpt_dropout, mini_batch_size):
         
         self.inpt = tf.reshape(inpt, self.image_shape)
-        conv_out = self.activation_fn(conv2d(self.inpt, self.w, padding=self.padding) + self.b)
-        pooled_out = max_pool_2x2(conv_out, padding=self.padding)
+        conv_out = self.activation_fn(conv2d(self.inpt, self.w, strides=self.c_stride, padding=self.padding) + self.b)
+        pooled_out = max_pool_2x2(conv_out, ksize=self.k_size, strides=self.k_stride, padding=self.padding)
         self.output = pooled_out
         self.output_dropout = self.output # no dropout in the convolutional layers
 
@@ -376,7 +387,7 @@ class FullyConnectedLayer(object):
             tf.matmul(self.inpt_dropout, self.w) + self.b)
 
     def accuracy(self, y):
-        "Return the accuracy for the mini-batch."
+        #Return the accuracy for the mini-batch.
         return tf.reduce_mean(tf.equal(y, self.y_out))
 
 
@@ -388,7 +399,6 @@ class SoftmaxLayer(object):
         n_in: number of input channels
         n_out: number of output channels
         p_dropout: probability that each element(network's units) is kept
-
         Note:Activation function is automatically softmax
         """
         self.n_in = n_in
@@ -415,11 +425,12 @@ class SoftmaxLayer(object):
         else:
             self.inpt_dropout = self.inpt
 
-        self.output_dropout = tf.matmul(self.inpt_dropout, self.w) + self.b
-        #self.output_dropout = softmax(tf.matmul(self.inpt_dropout, self.w) + self.b)
+        self.output_dropout = tf.matmul(self.inpt_dropout, self.w) + self.b #Use this when using softmax cross entropy
+        #self.output_dropout = softmax(tf.matmul(self.inpt_dropout, self.w) + self.b) #Use this when using log loss
 
     def cost(self, net):
         #Return the softmax cross entropy cost.
+        #return tf.reduce_mean(tf.losses.log_loss(labels=net.y, predictions=self.output_dropout))
         return tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.output_dropout, labels=net.y))
         #return tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.output_dropout, labels=net.y)) #For one-hot encoded data
 
@@ -427,6 +438,3 @@ class SoftmaxLayer(object):
         #Return the accuracy for the mini-batch.
         correct = tf.equal(y, tf.cast(self.y_out, tf.int32))
         return tf.reduce_mean(tf.cast(correct, tf.float32))
-
-
-
