@@ -40,17 +40,20 @@ def dropout_layer(layer, p_dropout): return tf.nn.dropout(layer, p_dropout)
 
 
 # Modularized Convolution and pooling functions for convolution layers
-def conv2d(x, W, padding='SAME'):
+def conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME'):
     '''Padding is either SAME or VALID. According to TensorFlow docs, default is SAME
-
+    x: Input tensor
+    W: Filter tensor. 4D tensor shape of [filter_height, filter_width, in_channels, out_channels]
     Stride length is default 1
     '''
-    return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding=padding)
+    return tf.nn.conv2d(x, W, strides=strides, padding=padding)
 
 
-def max_pool_2x2(x, padding='SAME'):
-    return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
-                          strides=[1, 2, 2, 1], padding=padding)
+def max_pool_2x2(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'):
+    '''Default is 2x2 max pool with stride length = 1
+    '''
+    return tf.nn.max_pool(x, ksize=ksize,
+                          strides=strides, padding=padding)
 
 ###Load the MNIST Data
 def load_mnist_data_shared(filename="../data/mnist.pkl.gz"):
@@ -64,4 +67,10 @@ def load_mnist_data_shared(filename="../data/mnist.pkl.gz"):
         shared_y = np.asarray(data[1], dtype="int32")
         return shared_x, shared_y
     return [numpify(training_data), numpify(validation_data), numpify(test_data)]
+
+
+        
+###Exception Class to exit training if 100% accuracy is met
+class GetOutOfLoop( Exception ):
+    pass
 
