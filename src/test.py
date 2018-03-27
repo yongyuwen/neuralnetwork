@@ -26,7 +26,7 @@ net = Network([
     FullyConnectedLayer(
         n_in=40*7*7, n_out=1000, activation_fn=ReLU, p_dropout=0.5),
     FullyConnectedLayer(
-        n_in=1000, n_out=1000, activation_fn=ReLU, p_dropout=0.0),
+        n_in=1000, n_out=1000, activation_fn=ReLU, p_dropout=1.0),
     SoftmaxLayer(n_in=1000, n_out=10, p_dropout=0.5)], mini_batch_size)
 
 
@@ -44,7 +44,7 @@ net = Network([
     FullyConnectedLayer(
         n_in=40*7*7, n_out=1000, activation_fn=ReLU, p_dropout=0.5),
     FullyConnectedLayer(
-        n_in=1000, n_out=1000, activation_fn=ReLU, p_dropout=0.0),
+        n_in=1000, n_out=1000, activation_fn=ReLU, p_dropout=1.0),
     SoftmaxLayer(n_in=1000, n_out=10, p_dropout=0.5)], mini_batch_size)
     '''
 
