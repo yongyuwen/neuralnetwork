@@ -352,12 +352,12 @@ class ConvPoolLayer(object):
 
 class FullyConnectedLayer(object):
 
-    def __init__(self, n_in, n_out, activation_fn=sigmoid, p_dropout=0.0):
+    def __init__(self, n_in, n_out, activation_fn=sigmoid, p_dropout=1.0):
         """
         n_in: number of input channels
         n_out: number of output channels
         activation_fn: activation function to be used in this layer instance
-        p_dropout: probability that each element(network's units) is kept
+        p_dropout: probability that each element(network's units) is kept. 1.0 = no dropout
         """
         self.n_in = n_in
         self.n_out = n_out
@@ -379,11 +379,11 @@ class FullyConnectedLayer(object):
     def set_inpt(self, inpt, inpt_dropout, mini_batch_size):
         self.inpt = tf.reshape(inpt, (mini_batch_size, self.n_in))
         self.output = self.activation_fn(
-            (1-self.p_dropout)*tf.matmul(self.inpt, self.w) + self.b)
+            (self.p_dropout)*tf.matmul(self.inpt, self.w) + self.b)
         self.y_out = tf.argmax(self.output, axis=1)
 
         #Set dropout
-        if self.p_dropout != 0.0:
+        if self.p_dropout != 1.0:
             self.inpt_dropout = dropout_layer(
                 tf.reshape(inpt_dropout, (mini_batch_size, self.n_in)), self.p_dropout)
         else:
@@ -400,11 +400,11 @@ class FullyConnectedLayer(object):
 
 class SoftmaxLayer(object):
 
-    def __init__(self, n_in, n_out, p_dropout=0.0):
+    def __init__(self, n_in, n_out, p_dropout=1.0):
         """
         n_in: number of input channels
         n_out: number of output channels
-        p_dropout: probability that each element(network's units) is kept
+        p_dropout: probability that each element(network's units) is kept. 1.0 = no dropout
         Note:Activation function is automatically softmax
         """
         self.n_in = n_in
@@ -421,11 +421,11 @@ class SoftmaxLayer(object):
 
     def set_inpt(self, inpt, inpt_dropout, mini_batch_size):
         self.inpt = tf.reshape(inpt, (mini_batch_size, self.n_in))
-        self.output = softmax((1-self.p_dropout)*tf.matmul(self.inpt, self.w) + self.b)
+        self.output = softmax((self.p_dropout)*tf.matmul(self.inpt, self.w) + self.b)
         self.y_out = tf.argmax(self.output, axis=1)
 
         #Set dropout
-        if self.p_dropout != 0.0:
+        if self.p_dropout != 1.0:
             self.inpt_dropout = dropout_layer(
                 tf.reshape(inpt_dropout, (mini_batch_size, self.n_in)), self.p_dropout)
         else:
