@@ -30,7 +30,7 @@ tf.logging.set_verbosity(tf.logging.ERROR)
 
 #Import self-defined functions
 from func import * #Bad practice but for ease of access of all self defined functions
-
+from sklearn.utils import shuffle as shuffle_
 
 
 #### Main class used to construct and train networks
@@ -57,7 +57,7 @@ class Network(object):
 
 
     def train(self, training_data, epochs, mini_batch_size, eta,
-            validation_data, test_data=None, store_accuracies=False, save_dir=None, calibration=False, lmbda=0.0):
+            validation_data, test_data=None, store_accuracies=False, shuffle = False, save_dir=None, calibration=False, lmbda=0.0):
         '''Trains the neural network using Kingma and Ba's Adam algorithm (by default)
         Other optimization algorithms such as stochastic gradient descent can also be used. To do so, edit the
 
@@ -143,6 +143,8 @@ class Network(object):
 
             try:
                 for epoch in range(epochs):
+                    if shuffle == True:
+                        training_x, training_y = shuffle_(training_x, training_y)
                     for minibatch_index in range(num_training_batches):
                         iteration = num_training_batches*epoch+minibatch_index
                         if iteration % 1000 == 0:
@@ -265,7 +267,7 @@ class Network(object):
         
         with tf.Session() as sess:
             # Restore variables from disk.
-            saver.restore(sess, "/tmp/model.ckpt")
+            saver.restore(sess, "./tmp/rnn_model_3.ckpt" ) #Original "/tmp/model.ckpt"
             
             print("Predicting results...")
             
@@ -325,7 +327,7 @@ class ConvPoolLayer(object):
         self.k_stride = k_stride
         self.k_size = k_size
         # initialize weights and biases
-        n_out = (filter_shape[0]*np.prod(filter_shape[2:])/np.prod(self.poolsize))
+        n_out = (filter_shape[3]*np.prod(filter_shape[:2])/np.prod(self.poolsize))
         self.w = tf.Variable(
             np.asarray(
                 np.random.normal(loc=0, scale=np.sqrt(1.0/n_out), size=filter_shape),
