@@ -9,7 +9,7 @@ We can use other activation functions from tensorflow libraries ie. tf.nn.<activ
 '''
 
 # read data:
-training_data, validation_data, test_data = func.load_mnist_data_shared()  #"../data/mnist_expanded.pkl.gz"
+training_data, validation_data, test_data = func.load_mnist_data_shared("../data/mnist_expanded.pkl.gz")  #"../data/mnist_expanded.pkl.gz"
 
 # mini-batch size:
 mini_batch_size = 10
@@ -26,8 +26,8 @@ net = Network([
     FullyConnectedLayer(
         n_in=40*7*7, n_out=1000, activation_fn=ReLU, p_dropout=0.5),
     FullyConnectedLayer(
-        n_in=1000, n_out=1000, activation_fn=ReLU, p_dropout=1.0),
-    SoftmaxLayer(n_in=1000, n_out=10, p_dropout=0.5)], mini_batch_size)
+        n_in=1000, n_out=1000, activation_fn=ReLU, p_dropout=0.5),
+    SoftmaxLayer(n_in=1000, n_out=10, p_dropout=1.0)], mini_batch_size)
 
 
 '''
@@ -44,12 +44,11 @@ net = Network([
     FullyConnectedLayer(
         n_in=40*7*7, n_out=1000, activation_fn=ReLU, p_dropout=0.5),
     FullyConnectedLayer(
-        n_in=1000, n_out=1000, activation_fn=ReLU, p_dropout=1.0),
+        n_in=1000, n_out=1000, activation_fn=ReLU, p_dropout=0.0),
     SoftmaxLayer(n_in=1000, n_out=10, p_dropout=0.5)], mini_batch_size)
     '''
-
 #Train the model
-net.train(training_data, 20, mini_batch_size, 0.0003, validation_data, test_data, store_accuracies=False, save_dir = None, calibration=False, lmbda=0.1) #save_dir "./tmp/model.ckpt"
+net.train(training_data, 20, mini_batch_size, 0.0003, validation_data, test_data, store_accuracies=False, shuffle = True, save_dir = None, calibration=False, lmbda=0.1) #save_dir "./tmp/model.ckpt"
 
 '''
 #Use the model to predict and get accuracy of predictions
