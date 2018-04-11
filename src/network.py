@@ -56,8 +56,19 @@ class Network(object):
 
 
 
-    def train(self, training_data, epochs, mini_batch_size, eta,
-            validation_data, test_data=None, store_accuracies=False, shuffle = False, save_dir=None, calibration=False, lmbda=0.0):
+    def train(self,
+              training_data,
+              epochs,
+              mini_batch_size,
+              eta,
+              validation_data,
+              test_data=None,
+              store_accuracies=False,
+              shuffle = False,
+              SGDR = False,
+              save_dir=None,
+              calibration=False,
+              lmbda=0.0):
         '''Trains the neural network using Kingma and Ba's Adam algorithm (by default)
         Other optimization algorithms such as stochastic gradient descent can also be used. To do so, edit the
 
@@ -70,6 +81,8 @@ class Network(object):
         test_data: test data in numpy array format
         store_accuracies: If True, stores the train, validation and test accuracies (Can be used for plotting against epoch
                             for model calibration and hyperparameter tuning) NOTE: train and test accuracies will be stored only if calibration = True
+        shuffle: Shuffle training dataset for training
+        SGDR: Stochastic Gradient Descent with Restarts. See https://arxiv.org/abs/1608.03983
         save_dir: Directory to store/load data. If None, stores data in default directory "/tmp/model.ckpt"
         calibration: If True, will calculate train and test accuracy for every epoch. NOTE: Should be disabled unless when calibrating as
                      it will greatly slow down training.
@@ -87,7 +100,7 @@ class Network(object):
                 self.test_accuracies=[]
 
 
-        # compute number of minibatches for training, validation and testing
+        #Compute number of minibatches for training, validation and testing
         num_training_batches = int(size(training_data)/mini_batch_size)
         num_validation_batches = int(size(validation_data)/mini_batch_size)
         if test_data:
@@ -99,9 +112,18 @@ class Network(object):
         cost = self.layers[-1].cost(self)+\
                lmbda*l2_norm_squared/tf.cast(num_training_batches, dtype=tf.float32)
 
+        #Create Global step
+        global_step = tf.Variable(0, trainable=False, name='global_step')
+        #global_step = tf.train.global_step(sess, global_step_tensor)
+    
+        #SGDR
+        if SGDR:
+            first_decay_steps = num_training_batches
+            eta = tf.train.cosine_decay_restarts(eta, global_step, first_decay_steps)
+        
         # Define optimizer
         with tf.name_scope('optimizer'):
-            #train_step = tf.train.GradientDescentOptimizer(eta).minimize(cost)
+            #train_step = tf.train.GradientDescentOptimizer(lr_decayed).minimize(cost)
             train_step = tf.train.AdamOptimizer(eta).minimize(cost)
 
         # Define minibatch accuracy operation
